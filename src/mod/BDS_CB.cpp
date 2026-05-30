@@ -2,6 +2,7 @@
 
 #include <ll/api/service/Bedrock.h>
 
+#include <ll/api/event/EventBus.h>
 #include <ll/api/event/player/PlayerChatEvent.h>
 
 namespace bds_chatbot {
@@ -19,7 +20,8 @@ bool BDS_CB::load() {
 }
 
 bool BDS_CB::enable() {
-    // getSelf().getLogger().info("loaded.");
+    auto& bus = ll::event::EventBus::getInstance();
+
     gListeners.insert(
         gListeners.begin(),
         bus.emplaceListener<ll::event::PlayerChatEvent>([](ll::event::PlayerChatEvent& event) {
@@ -33,6 +35,7 @@ bool BDS_CB::enable() {
             }
         })
     );
+
     return true;
 }
 
