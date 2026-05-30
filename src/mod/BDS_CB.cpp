@@ -8,7 +8,7 @@
 namespace bds_chatbot {
 
 BDS_CB& BDS_CB::getInstance() {
-    static BDS_CP instance;
+    static BDS_CB instance;
     return instance;
 }
 
@@ -30,7 +30,7 @@ bool BDS_CB::enable() {
             // TextPacket::createRawMessage(message).sendToClients();
             // event.cancel();
             if (event.message().rfind("ai ", 0) == 0) {
-                std::string query = event.message(.substr(3);
+                std::string query = event.message().substr(3);
                 BDS_CB::getInstance().getSelf().getLogger().info("Prompt from {}: {}", event.self().getRealName(), query);
             }
         })
@@ -46,7 +46,6 @@ bool BDS_CB::disable() {
         bus.removeListener(listener);
         listener.reset();
     }
-
     gListeners.clear();
 
     return true;
