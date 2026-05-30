@@ -1,6 +1,7 @@
 #include "mod/BDS_CB.h"
 
 #include <ll/api/service/Bedrock.h>
+#include <ll/api/mod/RegisterHelper.h>
 
 #include <ll/api/event/EventBus.h>
 #include <ll/api/event/player/PlayerChatEvent.h>
