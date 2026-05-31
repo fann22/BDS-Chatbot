@@ -4,9 +4,5 @@
     "version": "${modVersion}",
     "type": "native",
     "platform": "${modPlatform}",
-    "dependencies": [
-        {
-            "name": "iListenAttentively"
-        }
-    ]
+    "dependencies": []
 }
