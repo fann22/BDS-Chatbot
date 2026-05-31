@@ -14,7 +14,7 @@ option_end()
 add_requires("levilamina", {configs = {target_type = get_config("target_type")}})
 add_requires("levibuildscript")
 
-add_requires("openssl3-3.6.2")
+add_requires("openssl3")
 add_requires("cpp-httplib", {configs = {ssl = true}})
 
 if not has_config("vs_runtime") then
@@ -25,8 +25,8 @@ target("BDS-Chatbot") -- Change this to your mod name.
     add_rules("@levibuildscript/linkrule")
     add_rules("@levibuildscript/modpacker")
     add_cxflags( "/EHa", "/utf-8", "/W4", "/w44265", "/w44289", "/w44296", "/w45263", "/w44738", "/w45204")
-    add_defines("NOMINMAX", "UNICODE", "CPPHTTPLIB_OPENSSL_SUPPORT")
-    add_packages("levilamina", "openssl3-3.6.2", "cpp-httplib")
+    add_defines("NOMINMAX", "UNICODE") --, "CPPHTTPLIB_OPENSSL_SUPPORT", "CPPHTTPLIB_SSL_ENABLED")
+    add_packages("levilamina", "openssl3", "cpp-httplib")
     set_exceptions("none") -- To avoid conflicts with /EHa.
     set_kind("shared")
     set_languages("c++20")

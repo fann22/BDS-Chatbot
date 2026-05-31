@@ -1,7 +1,10 @@
 #include "mod/BDS_CB.h"
+
+#define CPPHTTPLIB_OPENSSL_SUPPORT
 #include "mod/httplib.h"
 
 #include <nlohmann/json.hpp>
+#include <openssl/ssl.h>
 
 #include <ll/api/service/Bedrock.h>
 #include <ll/api/mod/RegisterHelper.h>
@@ -14,6 +17,8 @@
 #include <mc/world/Level/level.h>
 #include <mc/world/Level/dimension/Dimension.h>
 #include <mc/world/actor/player/Player.h>
+
+#include <mc/network/packet/TextPacket.h>
 
 #include <unordered_map>
 
@@ -32,6 +37,8 @@ static std::vector<ll::event::ListenerPtr> gListeners;
 
 bool BDS_CB::load() {
     // getSelf().getLogger().debug("Loading...");
+    SSL_library_init();
+    OpenSSL_add_all_algorithms();
     return true;
 }
 
@@ -47,12 +54,22 @@ bool BDS_CB::enable() {
             // event.cancel();
 
             if (event.message().rfind("ai ", 0) == 0) {
+                std::string sender = event.self().getRealName() ;
                 std::string query  = event.message().substr(3);
-                std::function<void()> task = [this, query]() {
+                std::function<void()> task = [this, sender, query]() {
                     try {
-                        std::string prompt = getPrompt1(query);
-                        std::string result = askAI(prompt);
-                        BDS_CB::getInstance().getSelf().getLogger().info("GPT Response: {}, prompt: {}", result, prompt);
+                        std::string response = askAI(getPrompt1(query));
+
+                        auto tagsJson = json::parse(response, nullptr, false);
+                        if (tagsJson.is_discarded() || !tagsJson.is_array()) return;
+
+                        std::vector<std::string> tags = tagsJson.get<std::vector<std::string>>();
+                        
+                        json ctx;
+                        getData(tags, ctx);
+
+                        response = askAI(getPrompt2(ctx.dump(1), sender, query));
+                        TextPacket::createRawMessage(std::format("[§l§dAI§r]: {}", response)).sendToClients();
                     } catch (std::exception& e) {
                         BDS_CB::getInstance().getSelf().getLogger().info("Error: {}", e.what());
                     }
@@ -126,7 +143,7 @@ void getData(std::vector<std::string>& tags, json& ctx) {
                     {"uuid",              p.getUuid().asString()},
                     {"xuid",              p.getXuid()},
                     {"position",          jpos},
-                    {"render_distance",          p.mChunkRadius},
+                    {"render_distance",   p.mChunkRadius},
                     {"current_dimension", p.getDimension().mName},
                     {"ip_and_port",       p.getIPAndPort()},
                     {"platform_os",       platformToString(p.mBuildPlatform)},
@@ -157,7 +174,7 @@ void getData(std::vector<std::string>& tags, json& ctx) {
 }
 
 std::string askAI(const std::string& prompt) {
-    httplib::Client cli("https://stabledffusion.fr");
+    httplib::SSLClient cli("stablediffusion.fr");
     cli.set_read_timeout(30);
 
     json body = {{"prompt", prompt}};
@@ -171,7 +188,8 @@ std::string askAI(const std::string& prompt) {
 
     auto res = cli.Post("/gpt4/predict2", headers, body.dump(), "application/json");
 
-    if (!res || res->status != 200) return std::format("fail at 167: {}", res->status);
+    if (!res) return std::format("HTTP error: {}", httplib::to_string(res.error()));
+    if (res->status != 200) return std::format("fail at 167: {}", res->status);
 
     auto resJson = json::parse(res->body, nullptr, false);
     if (resJson.is_discarded()) return "fail at 170";
