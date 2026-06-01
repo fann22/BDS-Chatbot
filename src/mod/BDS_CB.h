@@ -80,7 +80,7 @@ Rules:
 Player's question: {})";
 
     std::string template2 = R"(--------------- THE BEGINNING OF TEMPLATE ---------------
-You are a friendly assistant for a Minecraft Bedrock server named "{}}"
+You are a friendly assistant for a Minecraft Bedrock server named "{}"
 With server IP Address of "{}" and Port of "{}"
 
 Server data (may be empty if not relevant):
