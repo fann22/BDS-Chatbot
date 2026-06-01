@@ -8,6 +8,12 @@ add_requires("levibuildscript")
 add_requires("openssl3")
 add_requires("cpp-httplib", {configs = {ssl = true}})
 
+option("target_type")
+    set_default("server")
+    set_showmenu(true)
+    set_values("server", "client")
+option_end()
+
 if not has_config("vs_runtime") then
     set_runtimes("MD")
 end
