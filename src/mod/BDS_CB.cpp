@@ -1,9 +1,6 @@
 #include "mod/BDS_CB.h"
 #include "ll/api/Config.h"
 
-#define CPPHTTPLIB_OPENSSL_SUPPORT
-#include "mod/httplib.h"
-
 #include <nlohmann/json.hpp>
 #include <openssl/ssl.h>
 
@@ -23,6 +20,8 @@
 #include <mc/network/packet/TextPacket.h>
 
 #include <unordered_map>
+
+#include "mod/httplib.h"
 
 namespace bds_chatbot {
 

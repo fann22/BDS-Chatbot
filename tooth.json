@@ -1,7 +1,7 @@
 {
   "format_version": 3,
   "format_uuid": "8fec6074-a7d5-4fad-83c9-1179a8735a6d",
-  "tooth": "github.com/LiteLDev/levilamina-mod-template",
+  "tooth": "github.com/fann22/BDS-Chatbot",
   "version": "1.0.0",
   "info": {
     "name": "BDS Chatbot",
@@ -23,7 +23,7 @@
         {
           "type": "zip",
           "urls": [
-            "https://{{tooth}}/releases/download/v{{version}}/levilamina-mod-template-server-windows-x64.zip"
+            "https://{{tooth}}/releases/download/v{{version}}/BDS-Chatbot-server-windows-x64.zip"
           ],
           "placements": [
             {
