@@ -19,7 +19,7 @@ public:
     }
 
     std::string getPrompt2(const std::string& datas, const std::string& sender, const std::string& question) {
-        return std::vformat(template1, std::make_format_args(
+        return std::vformat(template2, std::make_format_args(
             mConfig.server_name,
             mConfig.server_ip,
             mConfig.server_port,
