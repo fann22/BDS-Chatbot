@@ -59,18 +59,18 @@ bool BDS_CB::enable() {
                 std::string query  = event.message().substr(3);
                 std::function<void()> task = [this, sender, query]() {
                     try {
-                        std::string response = askAI(getPrompt1(query));
+                        std::string response1 = askAI(getPrompt1(query));
 
-                        auto tagsJson = json::parse(response, nullptr, false);
-                        if (tagsJson.is_discarded() || !tagsJson.is_array()) return;
+                        auto tagsJson = json::parse(response1, nullptr, false);
+                        if (tagsJson.is_discarded() || !tagsJson.is_array()) throw std::runtime_error("JSON parse failed.");
 
                         std::vector<std::string> tags = tagsJson.get<std::vector<std::string>>();
-                        
+
                         json ctx;
                         getData(tags, ctx);
 
-                        response = askAI(getPrompt2(ctx.dump(1), sender, query));
-                        TextPacket::createRawMessage(std::format("[§l§dAI§r]: {}", response)).sendToClients();
+                        std::string response2 = askAI(getPrompt2(ctx.dump(1), sender, query));
+                        TextPacket::createRawMessage(std::format("[§l§dAI§r]: {}", response2)).sendToClients();
                     } catch (std::exception& e) {
                         BDS_CB::getInstance().getSelf().getLogger().info("Error: {}", e.what());
                         TextPacket::createRawMessage(std::format("[§l§dAI§r]: §4Error: {}", e.what())).sendToClients();
