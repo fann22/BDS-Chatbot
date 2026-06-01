@@ -1,0 +1,39 @@
+{
+  "format_version": 3,
+  "format_uuid": "8fec6074-a7d5-4fad-83c9-1179a8735a6d",
+  "tooth": "github.com/fann22/BDS-Chatbot",
+  "version": "1.0.0",
+  "info": {
+    "name": "BDS Chatbot",
+    "description": "AI Chatbot for your Minecraft server.",
+    "tags": [
+      "platform:levilamina",
+      "type:mod"
+    ],
+    "avatar_url": "https://example.com/avatar.png"
+  },
+  "variants": [
+    {
+      "label": "",
+      "platform": "win-x64",
+      "dependencies": {
+        "github.com/LiteLDev/LeviLamina": "26.10.*"
+      },
+      "assets": [
+        {
+          "type": "zip",
+          "urls": [
+            "https://{{tooth}}/releases/download/v{{version}}/BDS-Chatbot-server-windows-x64.zip"
+          ],
+          "placements": [
+            {
+              "type": "dir",
+              "src": "BDS-Chatbot/",
+              "dest": "plugins/BDS-Chatbot/"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

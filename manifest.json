@@ -1,0 +1,8 @@
+{
+    "name": "${modName}",
+    "entry": "${modFile}",
+    "version": "1.0.0",
+    "type": "native",
+    "platform": "${modPlatform}",
+    "dependencies": []
+}
