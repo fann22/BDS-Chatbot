@@ -27,7 +27,7 @@ namespace bds_chatbot {
 
 using json = nlohmann::json;
 void getData(std::vector<std::string>& tags, json& ctx);
-std::string askAI(const std::string& prompt);
+std::string askAI(const std::string& _template, const std::string& sender, const std::string& prompt, const json& history);
 
 BDS_CB& BDS_CB::getInstance() {
     static BDS_CB instance;
@@ -107,8 +107,8 @@ std::string minecraftTickToTime(uint64 tick) {
     uint64 tickInDay   = tick % 24000;
     uint64 totalHours  = (tickInDay / 1000) + 6;
     uint64 hours24     = totalHours % 24;
-    uint64 hours       = std::floor(hours24);
-    uint64 minutes     = std::floor((hours24 - hours) * 60);
+    uint64 hours   = (uint64)hours24;
+    uint64 minutes = (uint64)((hours24 - hours) * 60);
     const char* period = hours >= 12 ? "PM" : "AM";
     int hours12        = hours % 12 == 0 ? 12 : hours % 12;
     return std::format("{}:{:02} {}", hours12, minutes, period);
@@ -222,7 +222,7 @@ std::string askAI(const std::string& _template, const std::string& sender, const
     if (!resJson.contains("choices") || resJson["choices"].empty()) throw std::runtime_error("Empty JSON result.");
 
     auto reply = resJson["choices"][0]["message"].value("content", "");
-    if (reply.isEmpty()) throw std::runtime_error("AI responded with empty message.");
+    if (reply.empty()) throw std::runtime_error("AI responded with empty message.");
     return reply;
 }
 

@@ -37,7 +37,7 @@ public:
             mConfig.server_ip,
             mConfig.server_port,
             datas,
-        ));
+        );
     }
 
     json getHistory() {
@@ -57,7 +57,7 @@ public:
 
         sharedHistory.push_back({ role, formatted });
 
-        while (sharedHistory.size() > 20) {
+        while (sharedHistory.size() > 50) {
             sharedHistory.pop_front();
         }
     }
@@ -90,7 +90,7 @@ public:
             });
         }
 
-        while (sharedHistory.size() > 20) {
+        while (sharedHistory.size() > 50) {
             sharedHistory.pop_front();
         }
     }
