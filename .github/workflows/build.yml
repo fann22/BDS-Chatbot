@@ -6,6 +6,11 @@ on:
 jobs:
   build:
     runs-on: windows-latest
+    strategy:
+      matrix:
+        target_type:
+          - server
+          - client
 
     steps:
       - uses: actions/checkout@v6
@@ -16,18 +21,18 @@ jobs:
           path: |
             ~/AppData/Local/.xmake
             .xmake
-          key: xmake-${{ runner.os }}-server-${{ hashFiles('xmake.lua', 'src/**') }}
+          key: xmake-${{ runner.os }}-${{ matrix.target_type }}-${{ hashFiles('xmake.lua', 'src/**') }}
           restore-keys: |
-            xmake-${{ runner.os }}-server-
+            xmake-${{ runner.os }}-${{ matrix.target_type }}-
             xmake-${{ runner.os }}-
 
       - run: xmake repo -u
 
-      - run: xmake f -a x64 -m release -p windows -y
+      - run: xmake f -a x64 -m release -p windows -v --target_type=${{ matrix.target_type }} -y
 
-      - run: xmake -y
+      - run: xmake -v -y
 
       - uses: actions/upload-artifact@v7
         with:
-          name: ${{ github.event.repository.name }}-${{ github.sha }}-server-windows-x64
+          name: ${{ github.event.repository.name }}-${{ github.sha }}-${{ matrix.target_type }}-windows-x64
           path: bin/
