@@ -1,4 +1,5 @@
 #include "mod/BDS_CB.h"
+#include "ll/api/Config.h"
 
 #define CPPHTTPLIB_OPENSSL_SUPPORT
 #include "mod/httplib.h"
@@ -6,6 +7,7 @@
 #include <nlohmann/json.hpp>
 #include <openssl/ssl.h>
 
+#include <ll/api/Config.h>
 #include <ll/api/service/Bedrock.h>
 #include <ll/api/mod/RegisterHelper.h>
 
@@ -36,9 +38,14 @@ BDS_CB& BDS_CB::getInstance() {
 static std::vector<ll::event::ListenerPtr> gListeners;
 
 bool BDS_CB::load() {
-    // getSelf().getLogger().debug("Loading...");
     SSL_library_init();
     OpenSSL_add_all_algorithms();
+
+    const auto& configPath = getSelf().getConfigDir() / "config.json";
+    if (!ll::config::loadConfig(BDS_CB::getInstance().mConfig, configPath)) {
+        BDS_CB::getInstance().getSelf().getLogger().warn("Cannot load config, saving defaults.");
+    }
+
     return true;
 }
 
@@ -48,11 +55,6 @@ bool BDS_CB::enable() {
     gListeners.insert(
         gListeners.begin(),
         bus.emplaceListener<ll::event::PlayerChatEvent>([this](ll::event::PlayerChatEvent& event) {
-            // BDSE::getInstance().getSelf().getLogger().info("{}: {}", event.self().getRealName(), event.message());
-            // auto message = "§b" + event.self().getRealName() + "§f: " + event.message();
-            // TextPacket::createRawMessage(message).sendToClients();
-            // event.cancel();
-
             if (event.message().rfind("ai ", 0) == 0) {
                 std::string sender = event.self().getRealName() ;
                 std::string query  = event.message().substr(3);

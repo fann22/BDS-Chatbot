@@ -1,6 +1,7 @@
 #pragma once
 
-#include "ll/api/mod/NativeMod.h"
+#include "Config.h"
+#include <ll/api/mod/NativeMod.h>
 
 namespace bds_chatbot {
 
@@ -13,8 +14,39 @@ public:
 
     [[nodiscard]] ll::mod::NativeMod& getSelf() const { return mSelf; }
 
-    std::string getPrompt1(std::string question) {
-        return std::format(R"(--------------- THE BEGINNING OF TEMPLATE ---------------
+    std::string getPrompt1(const std::string& question) {
+        return std::vformat(template1, std::make_format_args(question));
+    }
+
+    std::string getPrompt2(const std::string& datas, const std::string& sender, const std::string& question) {
+        return std::vformat(template1, std::make_format_args(
+            mConfig.server_name,
+            mConfig.server_ip,
+            mConfig.server_port,
+            datas,
+            sender,
+            question
+        ));
+    }
+
+    /// @return True if the mod is loaded successfully.
+    bool load();
+
+    /// @return True if the mod is enabled successfully.
+    bool enable();
+
+    /// @return True if the mod is disabled successfully.
+    bool disable();
+
+    // TODO: Implement this method if you need to unload the mod.
+    // /// @return True if the mod is unloaded successfully.
+    // bool unload();
+
+private:
+    ll::mod::NativeMod& mSelf;
+    Config mConfig;
+
+    std::string template1 = R"(--------------- THE BEGINNING OF TEMPLATE ---------------
 You are data requirement analyzer for a Minecraft Bedrock server assistant.
 
 Available data flags:
@@ -32,7 +64,7 @@ Examples:
 "what's my location?" -> ["players"]
 "what time it is?" -> ["world_time"]
 "what's current server tick?" -> ["server_tick"]
-"how many players online?" -> ["player_count"]
+"how many players online?" -> ["players_count"]
 "hello!" -> []
 "what is 2+2?" -> []
 
@@ -45,14 +77,11 @@ Rules:
 
 --------------- THE END OF TEMPLATE ---------------
 
-Player's question: {})", question);
-    }
+Player's question: {})";
 
-    
-    std::string getPrompt2(std::string datas, std::string sender, std::string question) {
-        return std::format(R"(--------------- THE BEGINNING OF TEMPLATE ---------------
-You are a friendly assistant for a Minecraft Bedrock server named "AnomalySurvival"
-With server IP Address of "play.skyes.me" and Port of "25600"
+    std::string template2 = R"(--------------- THE BEGINNING OF TEMPLATE ---------------
+You are a friendly assistant for a Minecraft Bedrock server named "{}}"
+With server IP Address of "{}" and Port of "{}"
 
 Server data (may be empty if not relevant):
 {}
@@ -62,30 +91,13 @@ Rules:
 - No emojis.
 - NO "based on the data" or similar phrases.
 - If asked about coordinates, answer with x, y, z format.
-- Answer in thye same language of the player used.
-- If no server data provided, just responsd naturally, like a normal conversation.
+- Answer in the same language of the player used.
+- If no server data provided, just respond naturally, like a normal conversation.
 
 --------------- THE END OF TEMPLATE ---------------
 
 You're talking with: {}
-Player's question: {})", datas, sender, question);
-        }
-
-    /// @return True if the mod is loaded successfully.
-    bool load();
-
-    /// @return True if the mod is enabled successfully.
-    bool enable();
-
-    /// @return True if the mod is disabled successfully.
-    bool disable();
-
-    // TODO: Implement this method if you need to unload the mod.
-    // /// @return True if the mod is unloaded successfully.
-    // bool unload();
-
-private:
-    ll::mod::NativeMod& mSelf;
+Player's question: {})";
 };
 
 } // namespace bds_chatbot
