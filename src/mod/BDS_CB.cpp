@@ -45,6 +45,8 @@ bool BDS_CB::load() {
         BDS_CB::getInstance().getSelf().getLogger().warn("Cannot load config, saving defaults.");
     }
 
+    loadHistory();
+
     return true;
 }
 
@@ -59,7 +61,7 @@ bool BDS_CB::enable() {
                 std::string query  = event.message().substr(3);
                 std::function<void()> task = [this, sender, query]() {
                     try {
-                        std::string response1 = askAI(getPrompt1(query));
+                        std::string response1 = askAI(getTemplate1(), sender, query, json::array());
 
                         auto tagsJson = json::parse(response1, nullptr, false);
                         if (tagsJson.is_discarded() || !tagsJson.is_array()) throw std::runtime_error("JSON parse failed.");
@@ -69,8 +71,12 @@ bool BDS_CB::enable() {
                         json ctx;
                         getData(tags, ctx);
 
-                        std::string response2 = askAI(getPrompt2(ctx.dump(1), sender, query));
+                        json history = getHistory();
+                        std::string response2 = askAI(getTemplate2(ctx.dump(1)), sender, query, history);
                         TextPacket::createRawMessage(std::format("[§l§dAI§r]: {}", response2)).sendToClients();
+
+                        addToHistory(sender, "user", query);
+                        addToHistory(sender, "assistant", response2);
                     } catch (std::exception& e) {
                         BDS_CB::getInstance().getSelf().getLogger().info("Error: {}", e.what());
                         TextPacket::createRawMessage(std::format("[§l§dAI§r]: §4Error: {}", e.what())).sendToClients();
@@ -93,6 +99,7 @@ bool BDS_CB::disable() {
     }
     gListeners.clear();
 
+    saveHistory();
     return true;
 }
 
@@ -175,28 +182,48 @@ void getData(std::vector<std::string>& tags, json& ctx) {
     }
 }
 
-std::string askAI(const std::string& prompt) {
-    httplib::SSLClient cli("stablediffusion.fr");
+std::string askAI(const std::string& _template, const std::string& sender, const std::string& prompt, const json& history) {
+    httplib::SSLClient cli("g4f.space");
     cli.set_read_timeout(30);
 
-    json body = {{"prompt", prompt}};
+    json messages = json::array();
 
-    httplib::Headers headers = {
-        {"Content-Type", "application/json"},
-        {"Origin",       "https://stablediffusion.fr"},
-        {"Referer",      "https://stablediffusion.fr/chatgpt4"},
-        {"User-Agent",   "Mozilla/5.0"},
+    messages.push_back({
+        {"role", "system"},
+        {"content", _template},
+    });
+
+    for (const auto& msg : history) {
+        messages.push_back(msg);
+    }
+
+    messages.push_back({
+        {"role", "user"},
+        {"content", "(" + sender + "): " + prompt},
+    });
+
+    json body = {
+        {"model", "openai/gpt-oss-120b"},
+        {"temperature", 0.6},
+        {"messages", messages},
     };
 
-    auto res = cli.Post("/gpt4/predict2", headers, body.dump(), "application/json");
+    auto res = cli.Post(
+        "/api/groq/chat/completions",
+        body.dump(),
+        "application/json"
+    );
 
-    if (!res) throw std::runtime_error(std::format("HTTP error: {}", httplib::to_string(res.error())));
-    if (res->status != 200) throw std::runtime_error(std::format("HTTP status: {}", res->status));
+    if (!res) throw std::runtime_error(std::format("HTTP error: {}.", httplib::to_string(res.error())));
+    if (res->status != 200) throw std::runtime_error(std::format("HTTP status: {}.", res->status));
 
     auto resJson = json::parse(res->body, nullptr, false);
-    if (resJson.is_discarded()) throw std::runtime_error("JSON parse failed");
+    if (resJson.is_discarded()) throw std::runtime_error("JSON parse failed.");
+    if (!resJson.contains("choices") || resJson["choices"].empty()) throw std::runtime_error("Empty JSON result.");
 
-    return resJson.value("message", "");
+    auto reply = resJson["choices"][0]["message"].value("content", "");
+    if (reply.isEmpty()) throw std::runtime_error("AI responded with empty message.");
+    return reply;
 }
 
 } // namespace bds_chatbot

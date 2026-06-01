@@ -3,7 +3,20 @@
 #include "Config.h"
 #include <ll/api/mod/NativeMod.h>
 
+#include <nlohmann/json.hpp>
+#include <fstream>
+#include <filesystem>
+#include <deque>
+#include <unordered_map>
+
 namespace bds_chatbot {
+
+using json = nlohmann::json;
+
+struct ChatMessage {
+    std::string role;
+    std::string content;
+};
 
 class BDS_CB {
 
@@ -14,19 +27,72 @@ public:
 
     [[nodiscard]] ll::mod::NativeMod& getSelf() const { return mSelf; }
 
-    std::string getPrompt1(const std::string& question) {
-        return std::vformat(template1, std::make_format_args(question));
+    std::string getTemplate1() {
+        return template1;
     }
 
-    std::string getPrompt2(const std::string& datas, const std::string& sender, const std::string& question) {
+    std::string getTemplate2(const std::string& datas) {
         return std::vformat(template2, std::make_format_args(
             mConfig.server_name,
             mConfig.server_ip,
             mConfig.server_port,
             datas,
-            sender,
-            question
         ));
+    }
+
+    json getHistory() {
+        json j = json::array();
+        for (auto& msg : sharedHistory) {
+            j.push_back({ {"role", msg.role}, {"content", msg.content} });
+        }
+        return j;
+    }
+
+    void addToHistory(const std::string& playerName, const std::string& role, const std::string& content) {
+        std::string formatted = content;
+
+        if (role == "user") {
+            formatted = "(" + playerName + "): " + content;
+        }
+
+        sharedHistory.push_back({ role, formatted });
+
+        while (sharedHistory.size() > 20) {
+            sharedHistory.pop_front();
+        }
+    }
+
+    void saveHistory() {
+        auto path = getSelf().getConfigDir() / "chat_history.json";
+
+        json j = json::array();
+        for (auto& msg : sharedHistory) {
+            j.push_back({ {"role", msg.role}, {"content", msg.content} });
+        }
+
+        std::ofstream f(path);
+        f << j.dump(2);
+    }
+
+    void loadHistory() {
+        auto path = getSelf().getConfigDir() / "chat_history.json";
+        if (!std::filesystem::exists(path)) return;
+
+        std::ifstream f(path);
+        json j = json::parse(f, nullptr, false);
+        if (j.is_discarded() || !j.is_array()) return;
+
+        sharedHistory.clear();
+        for (auto& item : j) {
+            sharedHistory.push_back({
+                item.value("role", ""),
+                item.value("content", "")
+            });
+        }
+
+        while (sharedHistory.size() > 20) {
+            sharedHistory.pop_front();
+        }
     }
 
     /// @return True if the mod is loaded successfully.
@@ -45,9 +111,9 @@ public:
 private:
     ll::mod::NativeMod& mSelf;
     Config mConfig;
+    std::deque<ChatMessage> sharedHistory;
 
-    std::string template1 = R"(--------------- THE BEGINNING OF TEMPLATE ---------------
-You are data requirement analyzer for a Minecraft Bedrock server assistant.
+    std::string template1 = R"(You are data requirement analyzer for a Minecraft Bedrock server assistant.
 
 Available data flags:
 "players": player list which contains name, uuid, xuid, platform_os, coordinate, current_dimension, ip_and_port and render_distance.
@@ -73,14 +139,9 @@ If no server data is needed (greetings, general, non-server related questions, e
 Rules:
 - Respond with JSON array only, no explanation, no markdown, no emojis.
 - Only use tags from the available list above.
-- When question involves any player position or identity, always respond with "players"
+- When question involves any player position or identity, always respond with "players")";
 
---------------- THE END OF TEMPLATE ---------------
-
-Player's question: {})";
-
-    std::string template2 = R"(--------------- THE BEGINNING OF TEMPLATE ---------------
-You are a friendly assistant for a Minecraft Bedrock server named "{}"
+    std::string template2 = R"(You are a friendly assistant for a Minecraft Bedrock server named "{}"
 With server IP Address of "{}" and Port of "{}"
 
 Server data (may be empty if not relevant):
@@ -92,12 +153,8 @@ Rules:
 - NO "based on the data" or similar phrases.
 - If asked about coordinates, answer with x, y, z format.
 - Answer in the same language of the player used.
-- If no server data provided, just respond naturally, like a normal conversation.
+- If no server data provided, just respond naturally, like a normal conversation.)";
 
---------------- THE END OF TEMPLATE ---------------
-
-You're talking with: {}
-Player's question: {})";
 };
 
 } // namespace bds_chatbot
