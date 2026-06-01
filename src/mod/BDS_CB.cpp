@@ -74,6 +74,7 @@ bool BDS_CB::enable() {
                         TextPacket::createRawMessage(std::format("[§l§dAI§r]: {}", response)).sendToClients();
                     } catch (std::exception& e) {
                         BDS_CB::getInstance().getSelf().getLogger().info("Error: {}", e.what());
+                        TextPacket::createRawMessage(std::format("[§l§dAI§r]: §4Error: {}", e.what())).sendToClients();
                     }
                 };
                 ll::thread::ThreadPoolExecutor::getDefault().execute(std::move(task));
@@ -190,13 +191,13 @@ std::string askAI(const std::string& prompt) {
 
     auto res = cli.Post("/gpt4/predict2", headers, body.dump(), "application/json");
 
-    if (!res) return std::format("HTTP error: {}", httplib::to_string(res.error()));
-    if (res->status != 200) return std::format("fail at 167: {}", res->status);
+    if (!res) throw std::runtime_error(std::format("HTTP error: {}", httplib::to_string(res.error())));
+    if (res->status != 200) throw std::runtime_error(std::format("HTTP status: {}", res->status));
 
     auto resJson = json::parse(res->body, nullptr, false);
-    if (resJson.is_discarded()) return "fail at 170";
+    if (resJson.is_discarded()) throw std::runtime_error("JSON parse failed");
 
-    return resJson.value("message", "fail at 172");
+    return resJson.value("message", "");
 }
 
 } // namespace bds_chatbot
