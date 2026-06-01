@@ -2,11 +2,10 @@ on:
   release:
     types:
       - published
-  
+
 jobs:
   build:
     runs-on: windows-latest
-
     steps:
       - uses: actions/checkout@v6
 
@@ -58,7 +57,6 @@ jobs:
       - update-release-notes
     permissions:
       contents: write
-
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
