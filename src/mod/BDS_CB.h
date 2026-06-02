@@ -37,7 +37,7 @@ public:
             mConfig.server_ip,
             mConfig.server_port,
             datas,
-        );
+        ));
     }
 
     json getHistory() {
