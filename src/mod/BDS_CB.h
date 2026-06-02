@@ -36,7 +36,7 @@ public:
             mConfig.server_name,
             mConfig.server_ip,
             mConfig.server_port,
-            datas,
+            datas
         ));
     }
 
