@@ -27,6 +27,7 @@ namespace bds_chatbot {
 
 using json = nlohmann::json;
 void getData(std::vector<std::string>& tags, json& ctx);
+void replaceAll(std::string& str, const std::string& from, const std::string& to);
 std::string askAI(const std::string& _template, const std::string& sender, const std::string& prompt, const json& history);
 
 BDS_CB& BDS_CB::getInstance() {
@@ -223,7 +224,19 @@ std::string askAI(const std::string& _template, const std::string& sender, const
 
     auto reply = resJson["choices"][0]["message"].value("content", "");
     if (reply.empty()) throw std::runtime_error("AI responded with empty message.");
+    replaceAll(reply, " ", " ");
+
     return reply;
+}
+
+void replaceAll(std::string& str, const std::string& from, const std::string& to) {
+    if (from.empty()) return;
+    
+    size_t start_pos = 0;
+    while ((start_pos = str.find(from, start_pos)) != std::string::npos) {
+        str.replace(start_pos, from.length(), to);
+        start_pos += to.length();
+    }
 }
 
 } // namespace bds_chatbot
